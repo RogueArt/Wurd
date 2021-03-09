@@ -1,2 +1,2 @@
-cd "X:\College\CS 32\Project 4\x64\Debug"
+cd "X:\College\CS 32\Project 4\WurdSample"
 ./Wurd.exe "X:\College\CS 32\Project 4\Wurd\civildis.txt"

@@ -26,12 +26,14 @@ public:
 	void undo();
 
 private:
+	int lastCol() { return (*m_cur_line).length(); }
+	int lastRow() { return m_lines.size(); }
+
 	std::list<std::string> m_lines;
-	
-	// TO-DO: Add this to constructor
+	std::list<std::string>::iterator m_cur_line;
+
 	int m_row;
 	int m_col;
-	std::list<std::string>::iterator m_cur_line;
 };
 
 #endif // STUDENTTEXTEDITOR_H_

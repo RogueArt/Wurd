@@ -8,10 +8,6 @@
 #include <fstream>
 using namespace std;
 
-// REMOVE THIS
-ofstream output;
-// REMOVE THIS
-
 TextEditor* createTextEditor(Undo* un) {
 	return new StudentTextEditor(un);
 }
@@ -45,6 +41,7 @@ bool StudentTextEditor::load(std::string file) {
 
 	// Read file line by line, strip /r
 	// TO-DO: Why doesn't \r work?
+	// TO-DO: How do deal with \r\n?
 	string s;
 	while (getline(infile, s, '\n')) {
 		m_lines.push_back(s); // Add to list of lines
@@ -94,37 +91,48 @@ void StudentTextEditor::reset() {
 // O(1) time
 
 // TO-DO: Known bug going all the way to the end
+// TO-DO: Refactor to make LEFT and RIGHT more similar
 void StudentTextEditor::move(Dir dir) {
-	output.open("output.txt");
-	output << "Dir: " << dir << "Row: " << m_row << "Col: " << m_col << endl;
-
 	switch (dir) {
-	case (Dir::UP):
-		// Move editing pos up one line
-		// If already at top, do nothing
+	case (Dir::UP): {
+		// Do nothing if at top row aka m_row == 0
 		if (m_row > 0) {
-			m_row--;
-			m_cur_line--;
-		}
-		break;
+			// If current column is farther than upper line's col
+			// Move cursor to end of upper line  
+			const int upperLineLen = (*prev(m_cur_line)).length();
+			if (m_col > upperLineLen) m_col = upperLineLen;
 
-	case (Dir::DOWN):
+			// Move editing pos up one line
+			m_row--; m_cur_line--;
+		}
+	}
+								break;
+
+	case (Dir::DOWN): {
 		// Move editing pos down one line
 		// If already at bottom, do nothing
 		if (m_row < (m_lines.size() - 1)) {
-			m_row++;
-			m_cur_line++;
+			// If current column is farther than lower line's col
+			// Move cursor to end of upper line  
+			const int lowerLineLen = (*next(m_cur_line)).length();
+			if (m_col > lowerLineLen) m_col = lowerLineLen;
+
+			// Move editing pos down one line
+			m_row++; m_cur_line++;
 		}
-		break;
+	}
+									break;
 
-	case (Dir::LEFT):
-		// Do nothing if at first char on top line
-		if (m_col == 0 && m_row == 0) break;
+	case (Dir::LEFT): {
+		// Three possibilities for movement:
+		// 1. ALready on first char of first line -- do nothing
+		if (m_col == 0 && m_row == 0) {}
 
-		// Move cursor left
-		if (m_col > 0) m_col--;
+		// 2. Not on the first char, simply move left
+		else if (m_col > 0) m_col--;
 
-		// If reached end of line
+		// 3. First char of line that isn't first line
+		// Move up one line
 		else {
 			// Go back to previous line
 			m_cur_line--;
@@ -133,29 +141,28 @@ void StudentTextEditor::move(Dir dir) {
 			// Set cursor just past last char
 			m_col = (*m_cur_line).length();
 		}
-		break;
+	}
+									break;
 
-	case (Dir::RIGHT):
-		// Do nothing if at last char on last line
-		if (m_col == m_lines.size() - 1 && m_row == (*m_cur_line).length() - 1) {
-			break;
+	case (Dir::RIGHT): {
+		const int lineLen = (*m_cur_line).length();
+		const int numLinesPage = m_lines.size();
+
+		// Three possibilities for movement:
+		// 1. Already after last char of last line -- do nothing
+		if (m_row == numLinesPage - 1 && m_col == lineLen) {}
+
+		// 2. Editing position is just after last char of current line
+		else if (m_col == lineLen) {
+			m_cur_line++; // Current line is next line
+			m_row++; // Move down a row
+			m_col = 0; // Go to first char on line
 		}
 
-		// Move cursor right
-		if (m_col < (*m_cur_line).length() - 1) {
-			m_col++;
-		}
-
-		// If reached end of line
-		else {
-			// Go to next line
-			m_cur_line++;
-			m_row++;
-
-			// Set cursor to first char
-			m_col = 0;
-		}
-		break;
+		// 3. Otherwise just move cursor right
+		else { m_col++; }
+	}
+									 break;
 
 	case (Dir::HOME): m_col = 0; break;
 	case (Dir::END): m_col = (*m_cur_line).length(); break;
@@ -170,16 +177,27 @@ void StudentTextEditor::move(Dir dir) {
 void StudentTextEditor::del() {
 	// 1. If editing pos on valid character
 	// Delete character, move all chars in line to left
-	if (m_col < (*m_cur_line).length() - 1) {
-		(*m_cur_line).erase(m_col, 1);
-		// auto copy = m_cur_line;
-		// auto next = next(m_cur_line);
-	}
-	// 2. If end of line
-	// Merge next line with this one
-	else {
+	if (m_col < lastCol()) {
+		const char* ch = (*m_cur_line).erase(m_col, 1).c_str();
 
+		// Add to undo stack as DELETE after processing
+		getUndo()->submit(Undo::Action::DELETE, m_row, m_col, *ch);
 	}
+	// 2. If just after last character on a line
+	// Merge next line with this one
+	else if (m_row < lastRow() - 1) {
+		list<string>::iterator nextLine = next(m_cur_line); // Go to next line
+		string s = (*m_cur_line); // String at current line
+		m_lines.erase(m_cur_line); // Delete current empty line
+		m_cur_line = nextLine; // Set current line to next line
+		(*m_cur_line) += s; // Add back original string
+		m_col = lastCol();
+
+		// Add to undo stack as JOIN after processing
+		getUndo()->submit(Undo::Action::JOIN, m_row, m_col);
+	}
+	// 3. Last character on last line, do nothing
+	else {}
 
 	// Track with Undo
 
@@ -191,22 +209,33 @@ void StudentTextEditor::del() {
 // 1. O(L) time, L = length of line of text
 // 2. O(L1+L2), L1 = current line of text, L2 = next line of text
 void StudentTextEditor::backspace() {
-	// 1. If column > 0, delete character before editing pos
+	// 1. If not at first char, remove char, move column down
 	if (m_col > 0) {
-		(*m_cur_line).erase(m_col, 1);
-		// TO-DO: Remove this?
+		const char* ch = (*m_cur_line).erase(m_col, 1).c_str();
 		m_col--;
+
+		// Add to undo stack as DELETE after processing
+		getUndo()->submit(Undo::Action::DELETE, m_row, m_col, *ch);
 	}
-	// 2. If col == 0, merge with previous line
-	else {
+	// 2. If col == 0 and not at first line, merge with previous line
+	else if (m_col == 0 && m_row > 0) {
+		list<string>::iterator prevLine = prev(m_cur_line); // Go to next line
+		string s = (*m_cur_line); // String at previous line
+		m_lines.erase(m_cur_line); // Delete previous line
+		m_cur_line = prevLine; // Set current line to next line
+		(*m_cur_line) += s; // Add back original string
+		m_row--; // Move up one row
+		m_col = lastCol();
 
+		// Add to undo stack as JOIN after processing
+		getUndo()->submit(Undo::Action::JOIN, m_row, m_col);
 	}
-
-
-	// TODO
+	// 3. If col == 0 and first line, do nothing
+	else {}
 }
 
 // O(L) time, L = length of current line
+// TO-DO: Undo should work different for tab
 void StudentTextEditor::insert(char ch) {
 	// Inserting tab should result in 4 spaces, move pos by 4
 	if (ch == '\t') {
@@ -219,22 +248,29 @@ void StudentTextEditor::insert(char ch) {
 		m_col += 1;
 	}
 
-	// Tell Undo to track insertion so can be undone later
-
-	// TODO
+	// Add insert action to undo stack
+	getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ch);
 }
 
 // O(L) time, L = length of line of text
+// TO-DO: Do we literally need to insert a line break?
+// TO-DO: Does this meet O(L) constraints?
+// TO-DO: Why are lhs and rhs swapped
 void StudentTextEditor::enter() {
+	// Add to undo stack as SPLIT before processing
+	getUndo()->submit(Undo::Action::SPLIT, m_row, m_col);
+
 	// Insert line break at current pos, move line one down
-	insert('\n');
-	m_cur_line++;
+	// Split string into two
+	string lhs = (*m_cur_line).substr(0, m_col);
+	string rhs = (*m_cur_line).substr(m_col);
+	
+	// Split lines into two
+	(*m_cur_line) = rhs;
+	m_cur_line = m_lines.insert(m_cur_line, lhs);
 
-	// Move one line down, to first column
-	m_row++; m_col = 0;
-
-	// If last line, then just simply move it to end
-	// TODO
+	// Move down cursor to far left of new line
+	m_col = 0; m_row++; m_cur_line++;
 }
 
 // O(1) time
@@ -269,5 +305,44 @@ int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::stri
 
 // Page 12 for more details
 void StudentTextEditor::undo() {
-	// TODO
+	string text; int row, col, count;
+	Undo* u = getUndo();
+	
+	// Pass vars by reference, get Action type back
+	Undo::Action a = u->get(row, col, count, text);
+
+	// Position cursor correctly
+	m_col = col; m_row = row;
+	
+	switch (a) {
+		// Insert string at location
+		case (Undo::Action::INSERT): (*m_cur_line).insert(m_col, text); break;
+		// Erase count number of characters
+		case (Undo::Action::DELETE): (*m_cur_line).erase(m_col, count); break;
+		// Add line break at position
+		case (Undo::Action::SPLIT): enter(); break;
+		// Remove line break from position
+		case (Undo::Action::JOIN): del(); break;
+		// Do nothing, stack is empty
+		case (Undo::Action::ERROR): break;
+		break;
+	}
 }
+
+
+// string s1 = (*m_cur_line).substr(0, m_col);
+// string s2 = (*m_cur_line).substr(m_col);
+// m_cur_line = m_lines.insert(m_cur_line, s1);
+// m_cur_line = m_lines.insert(m_cur_line, s2)
+// Move to line above
+// m_row++; m_row++ 
+// m_col = 0;
+
+
+// Delete line with s
+// Insert line with s1 and s2
+// Move up one line
+// Set column to 0
+
+// If last line, then just simply move it to end
+// TODO

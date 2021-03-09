@@ -14,7 +14,23 @@ public:
 	void clear();
 
 private:
-	std::stack<Undo> m_undos;
+	struct Change {
+		Action a;
+		int row;
+		int col;
+		char ch;
+
+		// Constructor function
+		Change(Action a, int row, int col, char ch) {
+			this->a = a;
+			this->row = row;
+			this->col = col;
+			this->ch = ch;
+		}
+
+	};
+
+	std::stack<Change> m_changes;
 };
 
 #endif // STUDENTUNDO_H_
