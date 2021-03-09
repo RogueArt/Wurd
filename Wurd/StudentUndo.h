@@ -18,19 +18,19 @@ private:
 		Action a;
 		int row;
 		int col;
-		char ch;
+		std::string s;
 
 		// Constructor function
-		Change(Action a, int row, int col, char ch) {
+		Change(Action a, int row, int col, std::string s) {
 			this->a = a;
 			this->row = row;
 			this->col = col;
-			this->ch = ch;
+			this->s = s;
 		}
 
 	};
 
-	std::stack<Change> m_changes;
+	std::stack<Change*> m_changes;
 };
 
 #endif // STUDENTUNDO_H_
