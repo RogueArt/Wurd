@@ -1,0 +1,4 @@
+﻿  StudentTextEditor.cpp
+X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(136,34): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(163,49): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Wurd.vcxproj -> X:\College\CS 32\Project 4\x64\Debug\Wurd.exe

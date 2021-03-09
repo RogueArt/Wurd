@@ -1,0 +1,3 @@
+- Cursor should not be able to go anywhere
+- Enter deletes everything
+-

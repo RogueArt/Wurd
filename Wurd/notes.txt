@@ -1,0 +1,8 @@
+Page 5:
+- How character methods are called / work
+- Store the following:
+  - Lines of text being edited
+  - Current editing pos in text
+  - Data to facilitate undo operations
+    - StudentUndo used for this
+
