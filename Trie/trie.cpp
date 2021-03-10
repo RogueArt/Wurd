@@ -96,9 +96,7 @@ bool load(TrieNode* root, string dictionaryFile) {
   return true;
 }
 
-char asChar(int idx) {
-  return idx == 26 ? '\'' : char(idx + 'a');
-}
+char asChar(int idx) { return idx == 26 ? '\'' : char(idx + 'a'); }
 
 bool spellCheck(TrieNode* root, string word, int maxSuggestions, vector<string>& suggestions) {
   // If word found, return true
@@ -163,6 +161,11 @@ void spellCheckLine(TrieNode* root, const string& line, vector<Position>& proble
       acc = ""; // Restore string to empty
     }
   }
+
+  if (acc != "") {
+    p.end = line.length()-1;
+    if (!root->has(acc)) problems.push_back(p);
+  }
 }
 
 int main() {
@@ -187,7 +190,7 @@ int main() {
   // for (int x = 0; x < suggestions.size(); x++)
   //   cout << suggestions[x] << endl;
 
-  const string line = "Diz\"iz-a tezt.";
+  const string line = "On the duty";
   vector<Position> problems;
   spellCheckLine(root, line, problems);
   for (int x = 0; x < problems.size(); x++)
