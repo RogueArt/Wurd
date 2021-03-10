@@ -196,15 +196,15 @@ void StudentTextEditor::del() {
 void StudentTextEditor::mergePrevLine(bool logAction) {
 	list<string>::iterator prevLine = prev(m_cur_line); // Go to previous line
 	string s = (*m_cur_line); // String at previous line
-	int prevLen = lastCol();
-	m_lines.erase(m_cur_line); // Delete previous line
+	int prevLen = (*prevLine).length(); // Length of previous line
+	m_lines.erase(m_cur_line); // Delete current line
 	m_cur_line = prevLine; // Set current line to previous line
 	(*m_cur_line) += s; // Add back original string
 	m_row--; // Move up one row
 	m_col = prevLen;
 
 	// Add to undo stack as JOIN after processing
-	getUndo()->submit(Undo::Action::JOIN, m_row, m_col);
+	getUndo()->submit(Undo::Action::JOIN, m_row, m_col, '\0');
 }
 
 void StudentTextEditor::mergeNextLine(bool logAction) {
@@ -214,14 +214,14 @@ void StudentTextEditor::mergeNextLine(bool logAction) {
 	(*m_cur_line) += s; // Add back original string
 
 	// Add to undo stack as JOIN after processing
-	if (logAction) getUndo()->submit(Undo::Action::JOIN, m_row, m_col);
+	if (logAction) getUndo()->submit(Undo::Action::JOIN, m_row, m_col, '\0');
 }
 
 
 
 void StudentTextEditor::splitLine(bool logAction) {
 	// Add to undo stack as SPLIT before processing
-	if (logAction) getUndo()->submit(Undo::Action::SPLIT, m_row, m_col);
+	if (logAction) getUndo()->submit(Undo::Action::SPLIT, m_row, m_col, '\0');
 
 	// Insert line break at current pos, move line one down
 	// Split string into two

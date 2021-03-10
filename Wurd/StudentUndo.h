@@ -27,7 +27,6 @@ private:
 			this->col = col;
 			this->s = s;
 		}
-
 	};
 
 	std::stack<Change*> m_changes;
