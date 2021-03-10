@@ -79,17 +79,16 @@ void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<Spel
 		if (isValidChar(ch)) {
 			// Set start index
 			if (acc == "") p.start = x;
-			acc += ch; // Add char to end of string
+			acc.push_back(ch); // Add char to end of string
 		}
 		// If it's an invalid char
 		else {
 			// If word was being formed
 			if (acc != "") {
 				p.end = x - 1; // Set end index
-				 // Push if not in Trie
-
+				 
+				// Push if not in Trie
 				if (!m_root->has(acc)) {
-
 					problems.push_back(p);
 				}
 			}

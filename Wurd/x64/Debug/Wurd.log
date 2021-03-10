@@ -1,20 +1,3 @@
-﻿  StudentSpellCheck.cpp
-X:\College\CS 32\Project 4\Wurd\StudentSpellCheck.cpp(101,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-  StudentTextEditor.cpp
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.h(33,16): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.h(34,16): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(102,57): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(102,57): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(117,57): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(117,57): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(142,34): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(148,45): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(148,45): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(149,42): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(149,42): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(168,49): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-X:\College\CS 32\Project 4\Wurd\StudentTextEditor.cpp(199,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-  StudentUndo.cpp
-X:\College\CS 32\Project 4\Wurd\StudentUndo.cpp(79,32): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-  Generating Code...
+﻿  StudentUndo.cpp
+X:\College\CS 32\Project 4\Wurd\StudentUndo.cpp(77,31): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Wurd.vcxproj -> X:\College\CS 32\Project 4\x64\Debug\Wurd.exe

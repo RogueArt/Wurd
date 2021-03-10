@@ -4,7 +4,6 @@
 #include <vector>
 
 // My includes:
-#include <iostream>
 #include <fstream>
 using namespace std;
 
@@ -12,6 +11,7 @@ TextEditor* createTextEditor(Undo* un) {
 	return new StudentTextEditor(un);
 }
 
+// O(1) time to initialize all variables
 StudentTextEditor::StudentTextEditor(Undo* undo)
 	: TextEditor(undo) {
 	m_row = 0;
@@ -21,11 +21,16 @@ StudentTextEditor::StudentTextEditor(Undo* undo)
 }
 
 // O(N), N = number of lines in file
+// Should not free the Undo pointer
+// TO-DO: Check if this is correct
 StudentTextEditor::~StudentTextEditor() {
-	// TODO
+	m_lines.clear();
 }
 
-// O(M+N) time, M = number of lines, N = number of lines
+// O(M+N+U) time
+// M = number of chars in the editor being edited
+// N = number of chars being loaded in
+// U = number of items in undo stack
 // Contains full path & filename
 bool StudentTextEditor::load(std::string file) {
 	// Read the file
@@ -34,14 +39,12 @@ bool StudentTextEditor::load(std::string file) {
 	// If reading file failed, do nothing, return false
 	if (!infile) return false;
 
-	// TO-DO: If loading same file, reset the contents
 	// Should reset file if user was already editing it
 	// O(M) operation
 	reset();
 
-	// Read file line by line, strip /r
-	// TO-DO: Why doesn't \r work?
-	// TO-DO: How do deal with \r\n?
+	// Read file line by line, strip /r if exists
+	// TO-DO: Strip \r from line
 	string s;
 	while (getline(infile, s, '\n')) {
 		m_lines.push_back(s); // Add to list of lines
@@ -51,7 +54,8 @@ bool StudentTextEditor::load(std::string file) {
 	return true;
 }
 
-// O(M) time, M = number of lines edited
+// O(M) time, M = number of chars edited
+// TO-DO: See if it makes a new file if doesn't exist at path
 bool StudentTextEditor::save(std::string file) {
 	// Open file, write lines in text editor to file
 	ofstream outfile(file);
@@ -69,7 +73,7 @@ bool StudentTextEditor::save(std::string file) {
 	return true;
 }
 
-// O(N), N = number of rows edited
+// O(N+U), N = number of rows edited, U = items in undo stack
 void StudentTextEditor::reset() {
 	// Clear contents
 	m_lines.clear();
@@ -83,15 +87,10 @@ void StudentTextEditor::reset() {
 	m_col = 0;
 
 	// Clear undo state
-
-	// TODO
+	getUndo()->clear();
 }
 
-// More detail on page 10 of spec
 // O(1) time
-
-// TO-DO: Known bug going all the way to the end
-// TO-DO: Refactor to make LEFT and RIGHT more similar
 void StudentTextEditor::move(Dir dir) {
 	switch (dir) {
 	case (Dir::UP): {
@@ -105,8 +104,8 @@ void StudentTextEditor::move(Dir dir) {
 			// Move editing pos up one line
 			m_row--; m_cur_line--;
 		}
+		break;
 	}
-								break;
 
 	case (Dir::DOWN): {
 		// Move editing pos down one line
@@ -120,8 +119,8 @@ void StudentTextEditor::move(Dir dir) {
 			// Move editing pos down one line
 			m_row++; m_cur_line++;
 		}
+		break;
 	}
-									break;
 
 	case (Dir::LEFT): {
 		// Three possibilities for movement:
@@ -141,8 +140,9 @@ void StudentTextEditor::move(Dir dir) {
 			// Set cursor just past last char
 			m_col = (*m_cur_line).length();
 		}
+		break;
 	}
-									break;
+									
 
 	case (Dir::RIGHT): {
 		const int lineLen = (*m_cur_line).length();
@@ -161,8 +161,8 @@ void StudentTextEditor::move(Dir dir) {
 
 		// 3. Otherwise just move cursor right
 		else { m_col++; }
+		break;
 	}
-									 break;
 
 	case (Dir::HOME): m_col = 0; break;
 	case (Dir::END): m_col = (*m_cur_line).length(); break;
@@ -199,7 +199,7 @@ void StudentTextEditor::mergePrevLine(bool logAction) {
 	int prevLen = (*prevLine).length(); // Length of previous line
 	m_lines.erase(m_cur_line); // Delete current line
 	m_cur_line = prevLine; // Set current line to previous line
-	(*m_cur_line) += s; // Add back original string
+	(*m_cur_line).append(s); // Add back original string
 	m_row--; // Move up one row
 	m_col = prevLen;
 
@@ -210,8 +210,8 @@ void StudentTextEditor::mergePrevLine(bool logAction) {
 void StudentTextEditor::mergeNextLine(bool logAction) {
 	list<string>::iterator nextLine = next(m_cur_line); // Go to next line
 	string s = (*nextLine); // String at current line
-	m_lines.erase(nextLine); // Delete current empty line
-	(*m_cur_line) += s; // Add back original string
+	m_lines.erase(nextLine); // Delete the next line
+	(*m_cur_line).append(s); // Add back next line contents to current line
 
 	// Add to undo stack as JOIN after processing
 	if (logAction) getUndo()->submit(Undo::Action::JOIN, m_row, m_col, '\0');
@@ -236,13 +236,12 @@ void StudentTextEditor::splitLine(bool logAction) {
 	m_col = 0; m_row++; m_cur_line++;
 }
 
-// TO-DO: Must not depend on number of lines edited
-
 // 1. O(L) time, L = length of line of text
 // 2. O(L1+L2), L1 = current line of text, L2 = next line of text
 void StudentTextEditor::backspace() {
 	// 1. If not at first char, remove char, move column down
 	if (m_col > 0) {
+		// Track deleted char
 		const char deletedCh = (*m_cur_line)[m_col - 1];
 		(*m_cur_line).erase(m_col - 1, 1);
 		m_col--;
@@ -259,27 +258,28 @@ void StudentTextEditor::backspace() {
 }
 
 // O(L) time, L = length of current line
-// TO-DO: Undo should work different for tab
+
 void StudentTextEditor::insert(char ch) {
 	// Inserting tab should result in 4 spaces, move pos by 4
 	if (ch == '\t') {
 		(*m_cur_line).insert(m_col, "    ");
-		m_col += 4;
+		for (int x = 0; x < 4; x++) {
+			m_col++;
+			// Add character with column AFTER char was inserted
+			getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ch);
+		}
 	}
 	// Move characters to right of editing pos by one
 	else {
 		(*m_cur_line).insert(m_col, string(1, ch));
-		m_col += 1;
+		m_col++;
+		// Add character with column AFTER char was inserted
+		getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ch);
 	}
-
-	// Add character with column AFTER char was inserted
-	getUndo()->submit(Undo::Action::INSERT, m_row, m_col, ch);
 }
 
 // O(L) time, L = length of line of text
 // TO-DO: Do we literally need to insert a line break?
-// TO-DO: Does this meet O(L) constraints?
-// TO-DO: Why are lhs and rhs swapped
 void StudentTextEditor::enter() {
 	splitLine(true);
 }
@@ -290,9 +290,7 @@ void StudentTextEditor::getPos(int& row, int& col) const {
 	row = m_row; col = m_col;
 }
 
-// O(numRows * L), where L = average line length
-// TO-DO: Check if size() is O(N) or O(1)
-// TO-DO: Figure out what numbers should get returned 
+// O(oldR + abs(row num - start row) + numRows * L), where L = average line length
 int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::string>& lines) const {
 	// Start row higher than available rows, return 0
 	if (startRow < 0 || numRows < 0 || m_lines.size() < startRow) return -1;
@@ -314,7 +312,7 @@ int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::stri
 	return count;
 }
 
-// Page 12 for more details
+// Runtime depends on nature of undo operation
 void StudentTextEditor::undo() {
 	string text; int row, col, count;
 
@@ -336,14 +334,14 @@ void StudentTextEditor::undo() {
 
 	// Check action type
 	switch (a) {
-		// Reinsert deleted chars
+	// Reinsert deleted chars
 	case (Undo::Action::INSERT): {
 		(*m_cur_line).insert(col, text);
 		m_col = col;
 		break;
 	}
 
-														 // Undo typed/inserted chars
+	// Undo typed/inserted chars
 	case Undo::Action::DELETE: {
 		// col is location of cursor after insertion
 		// col-1 is location of initial char
@@ -352,14 +350,14 @@ void StudentTextEditor::undo() {
 		break;
 	}
 
-													 // Undo a line merge
+	// Undo a line merge
 	case Undo::Action::SPLIT: {
 		m_col = col; // Go to row and column of merge
 		splitLine(false); // Split the line there
 		break;
 	}
 
-													// Undo enter()
+	// Undo enter()
 	case Undo::Action::JOIN: {
 		m_col = col; // Go to row and column of split
 		mergeNextLine(false); // Merge the next line into current

@@ -29,7 +29,7 @@ private:
 		}
 	};
 
-	std::stack<Change> m_changes;
+	std::stack<Change*> m_changes;
 };
 
 #endif // STUDENTUNDO_H_
