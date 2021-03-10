@@ -26,6 +26,10 @@ public:
 	void undo();
 
 private:
+	void mergePrevLine(bool logAction);
+	void mergeNextLine(bool logAction);
+	void splitLine(bool logAction);
+
 	int lastCol() { return (*m_cur_line).length(); }
 	int lastRow() { return m_lines.size(); }
 

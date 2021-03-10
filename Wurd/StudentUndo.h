@@ -18,7 +18,7 @@ private:
 		Action a;
 		int row;
 		int col;
-		std::string s;
+		std::string s = "";
 
 		// Constructor function
 		Change(Action a, int row, int col, std::string s) {
