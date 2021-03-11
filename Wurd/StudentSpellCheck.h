@@ -17,9 +17,13 @@ public:
 	void spellCheckLine(const std::string& line, std::vector<Position>& problems);
 
 private:
+	// Helper to clear the Trie
+	void reset();
+
 	class TrieNode {
 	public:
-		~TrieNode() { deleteAllNodes(this); }
+		// Destructor is empty since we're using deleteAllNodes to delete
+		~TrieNode() {};
 		// Constructor
 		TrieNode() {
 			// Initialize all children to nullptr

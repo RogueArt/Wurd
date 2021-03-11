@@ -25,6 +25,9 @@ bool StudentSpellCheck::load(std::string dictionaryFile) {
 	// If reading file failed, do nothing, return false
 	if (!infile) return false;
 
+	// Reset dictionary if loading a different one
+	reset();
+
 	// Read file character by character, strip \r if exists
 	string acc; char ch;
 	while (infile.get(ch)) {
@@ -42,6 +45,14 @@ bool StudentSpellCheck::load(std::string dictionaryFile) {
 
 	// Successfully read file
 	return true;
+}
+
+void StudentSpellCheck::reset() {
+	// Delete all nodes connected to root node
+	m_root->deleteAllNodes(m_root);
+
+	// Restore root node
+	m_root = new TrieNode();
 }
 
 bool StudentSpellCheck::spellCheck(std::string word, int max_suggestions, std::vector<std::string>& suggestions) {
