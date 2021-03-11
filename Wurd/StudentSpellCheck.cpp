@@ -2,11 +2,8 @@
 #include <string>
 #include <vector>
 
-// TO-DO: Remove below
 #include <fstream>
 using namespace std;
-// TO-DO: Remove above
-
 
 SpellCheck* createSpellCheck() {
 	return new StudentSpellCheck;
@@ -18,8 +15,8 @@ StudentSpellCheck::StudentSpellCheck() {
 
 StudentSpellCheck::~StudentSpellCheck() {
 	m_root->deleteAllNodes(m_root);
+	// m_root->~TrieNode();
 }
-
 
 bool StudentSpellCheck::load(std::string dictionaryFile) {
 	// Read the dictionary
@@ -28,11 +25,19 @@ bool StudentSpellCheck::load(std::string dictionaryFile) {
 	// If reading file failed, do nothing, return false
 	if (!infile) return false;
 
-	string s;
-	// Read file line by line
-	// TO-DO: Why doesn't \r work?
-	while (getline(infile, s, '\n')) {
-		m_root->insert(s);
+	// Read file character by character, strip \r if exists
+	string acc; char ch;
+	while (infile.get(ch)) {
+		switch (ch) {
+			// Detect line break, insert, reset accumulator
+		case '\n': m_root->insert(acc); acc = ""; break;
+			// Detect tab, convert to 4 spaces
+		case '\t': acc.append("    ");
+			// Do nothing if see \r
+		case '\r': break;
+			// Default is to add to accumulator
+		default: acc.push_back(ch); break;
+		}
 	}
 
 	// Successfully read file
@@ -43,28 +48,33 @@ bool StudentSpellCheck::spellCheck(std::string word, int max_suggestions, std::v
 	// If word found, return true
 	if (m_root->has(word)) return true;
 
-	// Otherwise, clear suggestions
+	// Otherwise, clear suggestions in O(oldS) time
 	suggestions.clear();
 
-	// Loop through every possible version of string
-	// TO-DO: O(N * NUM_CHARS) right now
-	int suggestionsFound = 0;
-	for (int modified = 0; modified < word.length(); modified++) {
-		const string left = word.substr(0, modified);
-		const string right = word.substr(modified + 1);
-
+	// Loop through every possible version of string, check in Trie
+	// O(L^2) time since O(L) iterations * O(L) lookup time
+	const string copy = word;
+	for (int modifiedIdx = 0; modifiedIdx < word.length(); modifiedIdx++) {
 		for (int y = 0; y < NUM_LETTERS; y++) {
-			const char mid = asChar(y);
-			const string possibleWord = left + mid + right;
+			// Replace char in string with modified char
+			const char changedChar = m_root->asChar(y);
+			word[modifiedIdx] = changedChar;
 
-			if (m_root->has(possibleWord)) {
-				suggestionsFound++;
-				suggestions.push_back(possibleWord);
+			// If it found a word, add to suggestions
+			// O(maxSuggestions)
+			if (m_root->has(word)) {
+				max_suggestions--;
+				suggestions.push_back(word);
 			}
-			if (suggestionsFound == max_suggestions) break;
+			// If remaining suggestions are 0, stop looping
+			if (max_suggestions == 0) break;
 		}
+
+		// Reset the word
+		word = copy;
 	}
 
+	// Could not find word
 	return false;
 }
 
@@ -76,7 +86,7 @@ void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<Spel
 	for (int x = 0; x < line.length(); x++) {
 		// Lowercase each letter for comparison
 		const char ch = line.at(x);
-		if (isValidChar(ch)) {
+		if (m_root->isValidChar(ch)) {
 			// Set start index
 			if (acc == "") p.start = x;
 			acc.push_back(ch); // Add char to end of string
@@ -86,7 +96,7 @@ void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<Spel
 			// If word was being formed
 			if (acc != "") {
 				p.end = x - 1; // Set end index
-				 
+
 				// Push if not in Trie
 				if (!m_root->has(acc)) {
 					problems.push_back(p);
@@ -96,6 +106,7 @@ void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<Spel
 		}
 	}
 
+	// Check string that was being formed at the end of line
 	if (acc != "") {
 		p.end = line.length() - 1;
 		if (!m_root->has(acc)) problems.push_back(p);

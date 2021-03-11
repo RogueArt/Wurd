@@ -26,7 +26,6 @@ public:
 	void undo();
 
 private:
-	void mergePrevLine(bool logAction);
 	void mergeNextLine(bool logAction);
 	void splitLine(bool logAction);
 

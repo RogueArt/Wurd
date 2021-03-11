@@ -57,15 +57,15 @@ StudentUndo::Action StudentUndo::get(int& row, int& col, int& count, std::string
 	Change& latestChange = m_changes.top();
 	Action latestAction = latestChange.a;
 
-	// Set passed in values to values of latest change
-	row = latestChange.row;
-	col = latestChange.col;
+	// Set correct row and column values as values of latest change
+	row = latestChange.row; col = latestChange.col;
+	if (latestChange.a) col -= 1;
 
 	// Count is 1 for all actions other than DELETE
-	count = latestChange.s.size();
+	count = latestAction == Action::DELETE ? latestChange.s.size() : 1;
 
 	// Text string empty for all other than INSERT
-	text = latestChange.s;
+	text = latestAction == Action::INSERT ? latestChange.s : "";
 
 	// // Delete latestChange from stack
 	// delete latestChange;
