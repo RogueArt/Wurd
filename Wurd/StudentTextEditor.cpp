@@ -46,29 +46,29 @@ bool StudentTextEditor::load(std::string file) {
 	while (infile.get(ch)) {
 		switch (ch) {
 			// Detect line break
-		case '\n': {
-			// Set current line to accumulated chars
-			(*m_cur_line) = acc;
+			case '\n': {
+				// Set current line to accumulated chars
+				(*m_cur_line) = acc;
 
-			// Go to next line, reset accumulator
-			m_lines.push_back("");
-			m_cur_line++;
-			acc = "";
-			break;
-		}
+				// Go to next line, reset accumulator
+				m_lines.push_back("");
+				m_cur_line++;
+				acc = "";
+				break;
+			}
 
-						 // Detect tab
-		case '\t': {
-			// Convert it to four spaces
-			acc.append("    ");
-		}
-						 break;
-
-						 // Do nothing if see \r
-		case '\r': break;
+			// Detect tab
+			case '\t': {
+				// Convert it to four spaces
+				acc.append("    ");
+				break;
+			}
+						 
+			// Do nothing if see \r
+			case '\r': break;
 
 			// Default is to add to accumulator
-		default: acc.push_back(ch); break;
+			default: acc.push_back(ch); break;
 		}
 	}
 	// Set left over text to content of last line
@@ -257,7 +257,6 @@ void StudentTextEditor::backspace() {
 }
 
 // O(L) time, L = length of current line
-
 void StudentTextEditor::insert(char ch) {
 	// Inserting tab should result in 4 spaces, move pos by 4
 	if (ch == '\t') {
@@ -350,35 +349,35 @@ void StudentTextEditor::undo() {
 	// Check action type
 	switch (a) {
 		// Reinsert deleted chars
-	case (Undo::Action::INSERT): {
-		(*m_cur_line).insert(col, text);
-		m_col = col;
-		break;
-	}
+		case (Undo::Action::INSERT): {
+			(*m_cur_line).insert(col, text);
+			m_col = col;
+			break;
+		}
 
-														 // Undo typed/inserted chars
-	case Undo::Action::DELETE: {
-		// col is location of cursor after insertion
-		// col-1 is location of initial char
-		(*m_cur_line).erase(col, count);
-		m_col = col;
-		break;
-	}
+		// Undo typed/inserted chars
+		case Undo::Action::DELETE: {
+			// col is location of cursor after insertion
+			// col-1 is location of initial char
+			(*m_cur_line).erase(col, count);
+			m_col = col;
+			break;
+		}
 
-													 // Undo a line merge
-	case Undo::Action::SPLIT: {
-		m_col = col; // Go to row and column of merge
-		splitLine(false); // Split the line there
-		break;
-	}
+		// Undo a line merge
+		case Undo::Action::SPLIT: {
+			m_col = col; // Go to row and column of merge
+			splitLine(false); // Split the line there
+			break;
+		}
 
-													// Undo enter()
-	case Undo::Action::JOIN: {
-		m_col = col; // Go to row and column of split
-		mergeNextLine(false); // Merge the next line into current
-		break;
-	}
+		// Undo enter()
+		case Undo::Action::JOIN: {
+			m_col = col; // Go to row and column of split
+			mergeNextLine(false); // Merge the next line into current
+			break;
+		}
 
-	default: break;
+		default: break;
 	}
 }

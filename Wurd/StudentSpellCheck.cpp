@@ -15,7 +15,6 @@ StudentSpellCheck::StudentSpellCheck() {
 
 StudentSpellCheck::~StudentSpellCheck() {
 	m_root->deleteAllNodes(m_root);
-	// m_root->~TrieNode();
 }
 
 bool StudentSpellCheck::load(std::string dictionaryFile) {

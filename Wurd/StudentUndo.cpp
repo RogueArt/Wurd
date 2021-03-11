@@ -55,32 +55,37 @@ StudentUndo::Action StudentUndo::get(int& row, int& col, int& count, std::string
 
 	// Grab latest change from stack
 	Change& latestChange = m_changes.top();
-	Action latestAction = latestChange.a;
+	
+	// Invert the stored Action here
+	Action undoAction;
+	switch (latestChange.a) {
+		case Action::INSERT: undoAction = Action::DELETE; break;
+		case Action::DELETE: undoAction = Action::INSERT; break;
+
+		case Action::SPLIT: undoAction = Action::JOIN; break;
+		case Action::JOIN: undoAction = Action::SPLIT; break;
+
+		default: undoAction = Action::ERROR; break;
+	}
+
+	// Don't modify passed in values if action is error
+	if (undoAction == Action::ERROR) return undoAction;
 
 	// Set correct row and column values as values of latest change
 	row = latestChange.row; col = latestChange.col;
-	if (latestChange.a) col -= 1;
+	if (undoAction == Action::DELETE) col -= 1;
 
 	// Count is 1 for all actions other than DELETE
-	count = latestAction == Action::DELETE ? latestChange.s.size() : 1;
+	count = undoAction == Action::DELETE ? latestChange.s.size() : 1;
 
 	// Text string empty for all other than INSERT
-	text = latestAction == Action::INSERT ? latestChange.s : "";
+	text = undoAction == Action::INSERT ? latestChange.s : "";
 
-	// // Delete latestChange from stack
-	// delete latestChange;
+	// Delete latestChange from stack
 	m_changes.pop();
 
-	// Return opposite of original action
-	switch (latestAction) {
-	case Action::INSERT: return Action::DELETE;
-	case Action::DELETE: return Action::INSERT;
-
-	case Action::SPLIT: return Action::JOIN;
-	case Action::JOIN: return Action::SPLIT;
-
-	default: return Action::ERROR;
-	}
+	// Return action type
+	return undoAction;
 }
 
 // O(N), N = number of elements in undo stack

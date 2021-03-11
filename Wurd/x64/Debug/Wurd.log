@@ -1,1 +1,3 @@
-﻿  Wurd.vcxproj -> X:\College\CS 32\Project 4\x64\Debug\Wurd.exe
+﻿  StudentSpellCheck.cpp
+X:\College\CS 32\Project 4\Wurd\StudentSpellCheck.cpp(121,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Wurd.vcxproj -> X:\College\CS 32\Project 4\x64\Debug\Wurd.exe
